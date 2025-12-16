@@ -3,140 +3,297 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Watercolor Effect</title>
+    <title>Watercolor Website</title>
     <style>
-        /* 1. CREAM CANVAS BACKGROUND */
-        :root {
-            /* Default fallback colors, overridden by JavaScript */
-            --color1: #E12AFB;
-            --color2: #34A6F4;
-            --color3: #F0B13B;
-            --color4: #2AA63E;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            /* Cream/Beige Canvas Color */
-            background-color: #F5F5DC;
-            min-height: 100vh;
-            margin: 0;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: 'Georgia', serif;
+            overflow-x: hidden;
+            background-color: #f5f2e8; /* Cream canvas background */
         }
 
-        /* 2. WATERCOLOR EFFECT LAYER */
-        #watercolor-effect {
-            /* Fixed position, covering a larger area than the viewport */
-            position: fixed;
-            top: -50vh;
-            left: -50vw;
-            width: 200vw;
-            height: 200vh;
-            
-            /* The magic: multiple large, radial gradients heavily blurred
-               to simulate spreading watercolor paint. */
-            background:
-                /* Blob 1: Random Position 1 */
-                radial-gradient(circle at 10% 20%, var(--color1) 0%, transparent 40%),
-                /* Blob 2: Random Position 2 */
-                radial-gradient(circle at 70% 30%, var(--color2) 0%, transparent 45%),
-                /* Blob 3: Random Position 3 */
-                radial-gradient(circle at 40% 80%, var(--color3) 0%, transparent 50%),
-                /* Blob 4: Random Position 4 */
-                radial-gradient(circle at 90% 90%, var(--color4) 0%, transparent 55%);
-            
-            /* Massive blur for the soft, watery look */
-            filter: blur(100px) opacity(0.8) url(#grain); 
-            
-            /* Blends the colors together like real paint */
-            mix-blend-mode: multiply; 
-            
-            /* Makes the color change smooth on page reload/DOM manipulation */
-            transition: background 1.5s ease-out;
-        }
-
-        /* 3. GLARE EFFECT LAYER */
-        #glare-effect {
+        #watercolorCanvas {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* Allows clicks to pass through to elements below */
-            
-            /* A subtle off-center white gradient for the unique glare/wet look */
-            background: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.3) 0%, transparent 60%);
-            opacity: 0.5;
-            mix-blend-mode: overlay; /* Creates a nice bright spot */
+            z-index: -1;
         }
 
-        /* 4. SVG FILTER FOR CANVAS/GRAIN TEXTURE */
-        .svg-filters {
-            display: none; /* Hide the SVG element from the page */
+        .content {
+            position: relative;
+            z-index: 1;
+            padding: 50px;
+            max-width: 1200px;
+            margin: 0 auto;
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 10px;
+            margin-top: 50px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
         }
     </style>
 </head>
 <body>
-    <div id="watercolor-effect"></div>
-
-    <div id="glare-effect"></div>
-
-    <svg class="svg-filters">
-        <filter id="grain">
-            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" result="noise" />
-            <feDiffuseLighting in="noise" lightingColor="#F5F5DC" surfaceScale="5" result="diffuse" />
-            <feComposite in="SourceGraphic" in2="diffuse" operator="arithmetic" k1="1" k2="0" k3="0" k4="0" />
-        </filter>
-    </svg>
+    <canvas id="watercolorCanvas"></canvas>
+    
+    <div class="content">
+        <h1>Welcome to My Watercolor Website</h1>
+        <p>This website features a beautiful watercolor effect that changes every time you visit or refresh the page. The colors are randomly selected from the Tailwind CSS color palette, creating a unique experience each time.</p>
+        <p>The watercolor effect simulates paint spreading on paper, with realistic bleeding and blending. The subtle glare adds depth and dimension to the painting.</p>
+        <button id="regenerate">Regenerate Watercolor</button>
+    </div>
 
     <script>
-        // 5. JAVASCRIPT FOR DYNAMIC COLOR PALETTE
-        document.addEventListener('DOMContentLoaded', () => {
-            
-            // Extracted hex codes (mostly 500-600 shades) from the Tailwind Color Chart
-            const tailwindColors = [
-                '#F4320B', '#FF692A', '#E1712B', '#F0B13B', 
-                '#5EA529', '#31C950', '#2D9966', '#36BBA7', 
-                '#3BB8DB', '#34A6F4', '#155DFC', '#615FFF', 
-                '#8E51FF', '#AD46FF', '#E12AFB', '#FF2056'
-            ];
-            
-            const numBlobs = 4; // We are using 4 colors/gradients
-            const selectedColors = [];
-            const root = document.documentElement;
+        // Tailwind color palette
+        const tailwindColors = [
+            // Reds
+            '#ef4444', '#f87171', '#fca5a5', '#fecaca', '#fee2e2',
+            // Oranges
+            '#f97316', '#fb923c', '#fdba74', '#fed7aa', '#ffedd5',
+            // Ambers
+            '#f59e0b', '#fbbf24', '#fcd34d', '#fde68a', '#fef3c7',
+            // Yellows
+            '#eab308', '#facc15', '#fde047', '#fef08a', '#fef9c3',
+            // Limes
+            '#84cc16', '#a3e635', '#bef264', '#d9f99d', '#ecfccb',
+            // Greens
+            '#22c55e', '#4ade80', '#86efac', '#bbf7d0', '#dcfce7',
+            // Emeralds
+            '#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#d1fae5',
+            // Teals
+            '#14b8a6', '#2dd4bf', '#5eead4', '#99f6e4', '#ccfbf1',
+            // Cyans
+            '#06b6d4', '#22d3ee', '#67e8f9', '#a5f3fc', '#cffafe',
+            // Sky
+            '#0ea5e9', '#38bdf8', '#7dd3fc', '#bae6fd', '#e0f2fe',
+            // Blues
+            '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe',
+            // Indigos
+            '#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe', '#e0e7ff',
+            // Violets
+            '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe', '#ede9fe',
+            // Purples
+            '#a855f7', '#c084fc', '#d8b4fe', '#e9d5ff', '#f3e8ff',
+            // Fuchsias
+            '#d946ef', '#e879f9', '#f0abfc', '#f5d0fe', '#faf5ff',
+            // Pinks
+            '#ec4899', '#f472b6', '#f9a8d4', '#fbcfe8', '#fce7f3',
+            // Roses
+            '#f43f5e', '#fb7185', '#fda4af', '#fecdd3', '#ffe4e6'
+        ];
 
-            // Function to randomly select colors without repetition
-            function selectRandomColors(count) {
-                const colorsCopy = [...tailwindColors];
-                for (let i = 0; i < count; i++) {
-                    const randomIndex = Math.floor(Math.random() * colorsCopy.length);
-                    selectedColors.push(colorsCopy.splice(randomIndex, 1)[0]);
+        const canvas = document.getElementById('watercolorCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Create watercolor effect
+        function createWatercolor() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Set cream background
+            ctx.fillStyle = '#f5f2e8';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Randomly select 3-5 colors from the palette
+            const numColors = Math.floor(Math.random() * 3) + 3;
+            const selectedColors = [];
+            
+            for (let i = 0; i < numColors; i++) {
+                const randomIndex = Math.floor(Math.random() * tailwindColors.length);
+                if (!selectedColors.includes(tailwindColors[randomIndex])) {
+                    selectedColors.push(tailwindColors[randomIndex]);
                 }
             }
             
-            // Function to generate random positions for the blobs (0-100%)
-            function generateRandomPosition() {
-                return `${Math.floor(Math.random() * 100)}%`;
-            }
-
-            // Run the setup
-            selectRandomColors(numBlobs);
-
-            // Apply the colors and positions as CSS variables
-            selectedColors.forEach((color, index) => {
-                root.style.setProperty(`--color${index + 1}`, color);
+            // Create watercolor strokes
+            const numStrokes = Math.floor(Math.random() * 5) + 5;
+            
+            for (let i = 0; i < numStrokes; i++) {
+                const color = selectedColors[Math.floor(Math.random() * selectedColors.length)];
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const size = Math.random() * 300 + 100;
                 
-                // Set the gradient positions slightly randomly for visual interest
-                root.style.setProperty(`--p${index + 1}-x`, generateRandomPosition());
-                root.style.setProperty(`--p${index + 1}-y`, generateRandomPosition());
-            });
+                // Create gradient for watercolor effect
+                const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+                
+                // Parse the hex color to RGB
+                const r = parseInt(color.substr(1, 2), 16);
+                const g = parseInt(color.substr(3, 2), 16);
+                const b = parseInt(color.substr(5, 2), 16);
+                
+                // Create transparent variations of the color
+                gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.1)`);
+                gradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, 0.05)`);
+                gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+                
+                ctx.fillStyle = gradient;
+                
+                // Draw irregular shape for watercolor effect
+                ctx.beginPath();
+                
+                // Create a more organic, irregular shape
+                const points = Math.floor(Math.random() * 5) + 8;
+                for (let j = 0; j < points; j++) {
+                    const angle = (j / points) * Math.PI * 2;
+                    const radius = size * (0.5 + Math.random() * 0.5);
+                    const px = x + Math.cos(angle) * radius;
+                    const py = y + Math.sin(angle) * radius;
+                    
+                    if (j === 0) {
+                        ctx.moveTo(px, py);
+                    } else {
+                        ctx.lineTo(px, py);
+                    }
+                }
+                
+                ctx.closePath();
+                ctx.fill();
+                
+                // Add texture to simulate watercolor paper
+                ctx.globalAlpha = 0.05;
+                for (let j = 0; j < 20; j++) {
+                    const dotX = x + (Math.random() - 0.5) * size;
+                    const dotY = y + (Math.random() - 0.5) * size;
+                    const dotSize = Math.random() * 3;
+                    
+                    ctx.beginPath();
+                    ctx.arc(dotX, dotY, dotSize, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+            }
             
-            // Note: The actual background is defined in the CSS <style> block,
-            // which uses these CSS variables (--color1, --p1-x, etc.)
+            // Add glare effect
+            const glareGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            glareGradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
+            glareGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.05)');
+            glareGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
             
-            console.log("Watercolor palette loaded:", selectedColors);
-        });
+            ctx.fillStyle = glareGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add subtle texture overlay
+            ctx.globalAlpha = 0.03;
+            for (let i = 0; i < 100; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const size = Math.random() * 2;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+        }
+        
+        // Animate the watercolor spreading effect
+        function animateWatercolor() {
+            let progress = 0;
+            const duration = 2000; // 2 seconds
+            const startTime = Date.now();
+            
+            // Create a temporary canvas for animation
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Generate the final watercolor
+            createWatercolor();
+            tempCtx.drawImage(canvas, 0, 0);
+            
+            // Clear the main canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#f5f2e8';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            function animate() {
+                const currentTime = Date.now();
+                progress = Math.min((currentTime - startTime) / duration, 1);
+                
+                // Easing function for more natural spreading
+                const easedProgress = 1 - Math.pow(1 - progress, 3);
+                
+                // Clear and redraw background
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#f5f2e8';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw the watercolor with increasing opacity and size
+                ctx.save();
+                ctx.globalAlpha = easedProgress;
+                
+                // Scale from center to simulate spreading
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const scale = 0.5 + easedProgress * 0.5;
+                
+                ctx.translate(centerX, centerY);
+                ctx.scale(scale, scale);
+                ctx.translate(-centerX, -centerY);
+                
+                ctx.drawImage(tempCanvas, 0, 0);
+                ctx.restore();
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                }
+            }
+            
+            animate();
+        }
+        
+        // Initial watercolor creation
+        animateWatercolor();
+        
+        // Regenerate button
+        document.getElementById('regenerate').addEventListener('click', animateWatercolor);
     </script>
 </body>
 </html>
