@@ -1,26 +1,169 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rosie's Portfolio</title>
-  <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      height: 100%;
-      width: 100%;
-    }
-    canvas {
-      display: block;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watercolor Canvas Website Effect</title>
+    <style>
+        /* 1. Cream Canvas Background */
+        body {
+            margin: 0;
+            overflow: hidden; /* Hide scrollbars, as the canvas covers the viewport */
+            height: 100vh;
+            width: 100vw;
+            /* Cream color: a light, slightly warm off-white */
+            background-color: #F8F7F3; 
+            /* Optional: Add a subtle texture filter for a paper/canvas look */
+            filter: sepia(0.05) contrast(1.02);
+            font-family: sans-serif;
+            color: #333;
+        }
+
+        /* 2. Watercolor Canvas Layer */
+        #watercolor-canvas {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1; /* Below content, above body background */
+            /* 4. The "Glare" Effect (subtle light and contrast adjustment) */
+            filter: brightness(1.05) contrast(1.02) saturate(1.1); 
+            /* This filter makes the colors pop and look slightly wet/glazed */
+        }
+
+        /* 3. Content Overlay (Your actual website content) */
+        #website-content {
+            position: relative;
+            z-index: 2; /* Ensures your text/images are visible */
+            padding: 50px;
+            text-align: center;
+        }
+
+        /* Optional basic content styling */
+        #website-content h1 {
+            font-size: 3em;
+            color: #555;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+        }
+    </style>
 </head>
 <body>
-  <!-- p5.js library -->
-  <script src="https://cdn.jsdelivr.net/npm/p5@1.7.0/lib/p5.min.js"></script>
-  <!-- Your custom sketch -->
-  <script src="sketch.js"></script>
+
+    <canvas id="watercolor-canvas"></canvas>
+
+    <div id="website-content">
+        <h1>Welcome to my Watercolor Page!</h1>
+        <p>This is where your actual website content goes, overlaid on the painted canvas.</p>
+        <p>Refresh the page to see a new random color palette and stroke pattern!</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('watercolor-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Full list of Tailwind 500 shades for random palette selection
+        const TAILWIND_COLORS = [
+            "#EF4444", // Red
+            "#F97316", // Orange
+            "#F59E0B", // Amber
+            "#EAB308", // Yellow
+            "#84CC16", // Lime
+            "#22C55E", // Green
+            "#10B981", // Emerald
+            "#06B6D4", // Cyan
+            "#0EA5E9", // Sky
+            "#3B82F6", // Blue
+            "#6366F1", // Indigo
+            "#8B5CF6", // Violet
+            "#A855F7", // Purple
+            "#EC4899", // Pink
+            "#F43F5E", // Rose
+        ];
+
+        /**
+         * Selects a random sub-palette of 3 to 5 distinct colors.
+         * @returns {string[]} An array of hex color codes.
+         */
+        function getRandomPalette() {
+            // Shuffle the colors and pick 3 to 5
+            const shuffled = TAILWIND_COLORS.sort(() => 0.5 - Math.random());
+            const count = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5 colors
+            return shuffled.slice(0, count);
+        }
+
+        /**
+         * Draws the continuous, blending watercolor strokes.
+         * @param {string[]} palette - The colors to use for the painting.
+         */
+        function drawWatercolor(palette) {
+            const width = canvas.width;
+            const height = canvas.height;
+            const numStrokes = 100; // Total number of "paint blobs"
+
+            // Set up for watercolor blending
+            ctx.globalCompositeOperation = 'multiply'; // Blends colors like real paint
+            ctx.globalAlpha = 0.05; // Very low opacity for a light wash effect
+
+            // We want a "continuous" look, so we draw many overlapping, soft strokes
+            for (let i = 0; i < numStrokes; i++) {
+                // Pick a random color from the chosen palette
+                const color = palette[Math.floor(Math.random() * palette.length)];
+                ctx.fillStyle = color;
+
+                // Randomize position and size
+                const x = Math.random() * width * 1.5 - (width * 0.25); // Extend beyond edges
+                const y = Math.random() * height * 1.5 - (height * 0.25);
+                const radius = Math.random() * (width / 5) + (width / 10); // Large, variable sizes
+
+                // Create a soft, blurred "blob" or "stroke"
+                ctx.beginPath();
+                // Use a large shadow for the soft, diffused watercolor edge
+                ctx.shadowBlur = radius * 0.8; 
+                ctx.shadowColor = color; 
+                
+                // Draw a distorted circle (oval) to simulate a stroke
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.scale(1 + Math.random() * 0.5, 1 - Math.random() * 0.5); // Randomly stretch the circle
+                ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                ctx.restore();
+                
+                ctx.fill();
+
+                // Clear the shadow for the next drawing operation that might not need it
+                ctx.shadowBlur = 0; 
+            }
+        }
+
+        /**
+         * Main initialization function
+         */
+        function init() {
+            // Set canvas size to match the window
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // Clear any previous drawings
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Get a new, random palette every time
+            const currentPalette = getRandomPalette();
+            
+            // 2. Draw the watercolor effect
+            drawWatercolor(currentPalette);
+
+            // OPTIONAL: Add a final, subtle layer of noise/texture
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 0.01;
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Run the initialization when the page loads
+        window.onload = init;
+        // Redraw when the window is resized to maintain full coverage
+        window.onresize = init;
+
+    </script>
 </body>
 </html>
